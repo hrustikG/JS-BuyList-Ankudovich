@@ -1,16 +1,89 @@
 <!DOCTYPE html>
-<html>
-<head lang="uk">
-    <meta charset="UTF-8">
-    <title>My Page</title>
-
-
-    <link rel="stylesheet" type="text/css" href="main.css" />
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Grigoriy Ankudovich">
+  <title>Список покупок</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="main.css">
 </head>
 <body>
-	<span class="product-item">
-		Apple
-		<span class="amount">4</span>
-	</span>
+  <article class="shopping-cart">
+    <section class="product-adder">
+      <form action="#" class="add-panel">
+        <input type="text" class="add-panel__input input_product" placeholder="Назва товару">
+        <button type="submit" class="add-panel__button" data-tooltip="Додати до списку">Додати</button>
+      </form>
+      <ul class="selected-product-list">
+        <li class="selected-product-list__item selected-product">
+          <p class="selected-product__name selected-product__name_bought">Помідори</p>
+          <div class="count-panel">
+            <button class="count-panel__minus count-panel__button count-panel__button_bought" data-tooltip="Зменшити кількість"><i class="fa fa-minus" aria-hidden="true"></i></button>
+            <span class="count-panel__count">2</span>
+            <button class="count-panel__plus count-panel__button count-panel__button_bought" data-tooltip="Збільшити кількість"><i class="fa fa-plus" aria-hidden="true"></i></button>
+          </div>
+          <div class="button_panel">
+            <button class="button_panel__bought_button button_panel__bought_button_not"  data-tooltip="Продовжити покупку">Не куплено</button>
+            <button class="button_panel__canceled_button button_panel__canceled_button_bought"><i class="fa fa-times" aria-hidden="true"></i></button>
+          </div>
+        </li>
+        <li class="selected-product-list__item selected-product">
+          <p class="selected-product__name">Печиво</p>
+          <div class="count-panel">
+            <button class="count-panel__minus count-panel__button" aria-label="Зменшити кількість" data-tooltip="Зменшити кількість"><i class="fa fa-minus" aria-hidden="true"></i></button>
+            <span class="count-panel__count">2</span>
+            <button class="count-panel__plus count-panel__button" aria-label="Збільшити кількість" data-tooltip="Збільшити кількість"><i class="fa fa-plus" aria-hidden="true"></i></button>
+          </div>
+          <div class="button_panel">
+            <button class="button_panel__bought_button"  data-tooltip="Купити товар">Куплено</button>
+            <button class="button_panel__canceled_button" aria-label="Видалити товар" data-tooltip="Видалити товар"><i class="fa fa-times" aria-hidden="true"></i></button>
+          </div>
+        </li>
+        <li class="selected-product-list__item selected-product">
+          <p class="selected-product__name"><input type="text" class="input_product" value="Сир"></p>
+          <div class="count-panel">
+            <button class="count-panel__minus count-panel__minus_one count-panel__button" data-tooltip="Зменшити кількість"><i class="fa fa-minus" aria-hidden="true"></i></button>
+            <span class="count-panel__count">1</span>
+            <button class="count-panel__plus count-panel__button" data-tooltip="Збільшити кількість"><i class="fa fa-plus" aria-hidden="true"></i></button>
+          </div>
+          <div class="button_panel">
+            <button class="button_panel__bought_button" data-tooltip="Купити товар">Куплено</button>
+            <button class="button_panel__canceled_button" data-tooltip="Видалити товар"><i class="fa fa-times" aria-hidden="true"></i></button>
+          </div>
+        </li>  
+      </ul>
+    </section>
+  <aside class="purchase-info">
+    <section class="products-summary">
+      <h2 class="products-summary__name products-summary__name_top">Залишилося</h2>
+      <ul class="products-summary__list">
+        <li class="products-summary__product">
+          <span class="products-summary__product-name ">Печиво</span>
+          <span class="products-summary__product-quantity ">2</span>
+        </li>
+        <li class="products-summary__product">
+          <span class="products-summary__product-name ">Сир</span>
+          <span class="products-summary__product-quantity ">1</span>
+        </li>
+      </ul>
+    </section>
+    <section class="products-summary">
+      <h2 class="products-summary__name">Куплено</h2>
+      <ul class="products-summary__list products-summary__list_bottom">
+        <li class="products-summary__product">
+          <span class="products-summary__product-name products-summary__product-name_bought">Помідори</span>
+          <span class="products-summary__product-quantity products-summary__product-quantity_bought">2</span>
+        </li>
+      </ul>
+    </section>
+  </aside>
+  </article>
+  <div class="badge">
+    <div class="badge__title">Buy List</div>
+    <div class="badge__content">
+      <span class="badge__content-header">Created by: </span> 
+      <span class="badge__author">Grigoriy Ankudovich</span></div>
+  </div>
 </body>
 </html>
