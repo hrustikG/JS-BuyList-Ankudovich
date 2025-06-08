@@ -104,15 +104,21 @@ button:hover::before {
   margin-top: 20px;
 }
 
-.product-adder {
+/* List of added products */
+.selected-product-list {
   flex: 0 0 58%;
   display: flex;
   flex-direction: column;
+  justify-content: space-around;
   gap: 0.1em;
   box-shadow: 2px 4px 5px var(--product-button-border);
 }
+.selected-product-list__item:last-child {
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
 
-/* Input form */
+/* Add panel */
 .add-panel {
   display: flex;
   background-color: var(--background-section);
@@ -152,18 +158,6 @@ button:hover::before {
 
 .add-panel__button:active {
   box-shadow: 0 2px var(--add-button-border);
-}
-
-/* List of added products */
-.selected-product-list {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  gap: 0.1em;
-}
-.selected-product-list__item:last-child {
-  border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 4px;
 }
 
 .selected-product {
