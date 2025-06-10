@@ -1,300 +1,318 @@
-let products = [
-    { id: 1, name: 'Помідори', quantity: 1, bought: false },
-    { id: 2, name: 'Печиво', quantity: 1, bought: false },
-    { id: 3, name: 'Сир', quantity: 1, bought: false }
+let initialProducts = [
+    { name: 'Помідори', quantity: 1, isBought: false },
+    { name: 'Печиво', quantity: 1, isBought: false },
+    { name: 'Сир', quantity: 1, isBought: false },
 ];
 
-
-const productList = document.querySelector('.selected-product-list');
-const addButton = document.querySelector('.add-panel__button');
-const addInput = document.querySelector('.add-panel__input');
-const purchaseInfo = document.querySelector('.purchase-info');
+const productList = document.getElementsByClassName('selected-product-list')[0];
+const purchaseInfo = document.getElementsByClassName('purchase-info')[0];
+const input = document.querySelector('.add-panel__input');
+const addProductButton = document.querySelector('.add-panel__button');
 
 function init() {
-    updateProductList();
-    updateStatistics();
+    if (!localStorage.getItem('productList')) {
+        setProductsToLocalStorage(initialProducts);
+    }
+    
+    const initialProductList = productList.querySelectorAll('.selected-product')
+    initialProductList.forEach(item => item.remove());
 
+    const purchaseInfoProducts = purchaseInfo.querySelectorAll('.products-summary__product');
+    purchaseInfoProducts.forEach(item => item.remove());
 
-    addButton.addEventListener('click', handleAddProduct);
-    addInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') handleAddProduct();
-    });
+    const productsFromLocalStorage = getProductsFromLocalStorage();
+    productsFromLocalStorage.forEach(item => addSelectedProductToHTML(item.name, item.quantity, item.isBought));
+
 }
 
-
-function updateProductList() {
-    while (productList.children.length > 1) {
-        productList.removeChild(productList.lastChild);
-    }
-
-    products.forEach(product => {
-        const productElement = createProductElement(product);
-        productList.appendChild(productElement);
-    });
+function getProductsFromLocalStorage() {
+    return JSON.parse(localStorage.getItem('productList'));
 }
 
-function createProductElement(product) {
-    const li = document.createElement('li');
-    li.className = 'selected-product-list__item selected-product';
-    li.dataset.id = product.id;
-
-
-    const nameElement = document.createElement(product.bought ? 'p' : 'div');
-    nameElement.className = `selected-product__name ${product.bought ? 'selected-product__name_bought' : ''}`;
-
-    if (product.bought) {
-        nameElement.textContent = product.name;
-    } else {
-        nameElement.textContent = product.name;
-        nameElement.addEventListener('click', () => editProductName(product.id, nameElement));
-    }
-
-
-    const countPanel = document.createElement('div');
-    countPanel.className = 'count-panel';
-
-    const minusButton = document.createElement('button');
-    minusButton.className = `count-panel__minus count-panel__button ${product.quantity === 1 ? 'count-panel__minus_one' : ''} ${product.bought ? 'count-panel__button_bought' : ''}`;
-    minusButton.innerHTML = '<i class="fa fa-minus" aria-hidden="true"></i>';
-    minusButton.setAttribute('aria-label', 'Зменшити кількість');
-    minusButton.setAttribute('data-tooltip', 'Зменшити кількість');
-    if (!product.bought) {
-        minusButton.addEventListener('click', () => decreaseQuantity(product.id));
-    }
-
-    const countSpan = document.createElement('span');
-    countSpan.className = 'count-panel__count';
-    countSpan.textContent = product.quantity;
-
-    const plusButton = document.createElement('button');
-    plusButton.className = `count-panel__plus count-panel__button ${product.bought ? 'count-panel__button_bought' : ''}`;
-    plusButton.innerHTML = '<i class="fa fa-plus" aria-hidden="true"></i>';
-    plusButton.setAttribute('aria-label', 'Збільшити кількість');
-    plusButton.setAttribute('data-tooltip', 'Збільшити кількість');
-    if (!product.bought) {
-        plusButton.addEventListener('click', () => increaseQuantity(product.id));
-    }
-
-    countPanel.appendChild(minusButton);
-    countPanel.appendChild(countSpan);
-    countPanel.appendChild(plusButton);
-
-    const buttonPanel = document.createElement('div');
-    buttonPanel.className = 'button_panel';
-
-    const boughtButton = document.createElement('button');
-    boughtButton.className = `button_panel__bought_button ${product.bought ? 'button_panel__bought_button_not' : ''}`;
-    boughtButton.textContent = product.bought ? 'Не куплено' : 'Куплено';
-    boughtButton.setAttribute('data-tooltip', product.bought ? 'Продовжити покупку' : 'Купити товар');
-    boughtButton.addEventListener('click', () => toggleBoughtStatus(product.id));
-
-    const deleteButton = document.createElement('button');
-    deleteButton.className = `button_panel__canceled_button ${product.bought ? 'button_panel__canceled_button_bought' : ''}`;
-    deleteButton.innerHTML = '<i class="fa fa-times" aria-hidden="true"></i>';
-    deleteButton.setAttribute('aria-label', 'Видалити товар');
-    deleteButton.setAttribute('data-tooltip', 'Видалити товар');
-    if (!product.bought) {
-        deleteButton.addEventListener('click', () => deleteProduct(product.id));
-    }
-
-    buttonPanel.appendChild(boughtButton);
-    buttonPanel.appendChild(deleteButton);
-
-    li.appendChild(nameElement);
-    li.appendChild(countPanel);
-    li.appendChild(buttonPanel);
-
-    return li;
+function setProductsToLocalStorage(updatedProductList){
+    localStorage.setItem('productList', JSON.stringify(updatedProductList)); 
 }
 
-function handleAddProduct() {
-    const productName = addInput.value.trim();
-
-    if (!productName) {
-        alert('Будь ласка, введіть назву товару');
+function getProductSummaryItemByName(productName) {
+    const productSummaries  = purchaseInfo.querySelectorAll('.products-summary__product-name');
+    for (const item of productSummaries) {
+        if (item.textContent.trim() === productName) {
+            return item.closest('.products-summary__product');
+        }
+    }
+    return null;
+}
+    
+function addProduct() {
+    const enteredProductName = input.value.trim();
+    
+    if(enteredProductName ==='') {
+        alert("Назва товару не може бути порожньою!");
         return;
     }
 
-    if (isProductNameExists(productName)) {
-        alert('Товар з такою назвою вже є у списку');
+    if(existNameInProductList(enteredProductName)) {
+        alert("Товар з такою назва вже існує!");
         return;
     }
 
+    const productListFromLocalStorage = getProductsFromLocalStorage();
     const newProduct = {
-        id: Date.now(),
-        name: productName,
+        name: enteredProductName,
         quantity: 1,
-        bought: false
-    };
+        isBought: false,
+    }
 
-    products.push(newProduct);
-    updateProductList();
-    updateStatistics();
-    addInput.value = '';
-    addInput.focus();
+    productListFromLocalStorage.push(newProduct);
+    setProductsToLocalStorage(productListFromLocalStorage); 
+
+
+    addSelectedProductToHTML(enteredProductName, newProduct.quantity, newProduct.isBought);
+
+    input.value = ''; 
+    input.focus();
+
 }
 
-function isProductNameExists(name) {
-    return products.some(
-        product => product.name.toLowerCase() === name.toLowerCase()
+function addSelectedProductToHTML(enteredProductName, productQuantity, isBought){
+    const lastProductInList = productList.querySelector('li:last-child');
+
+    const selectedProductListHTML = 
+    `<li class="selected-product-list__item selected-product">
+        <p class="selected-product__name">${enteredProductName}</p>
+        <div class="count-panel">
+          <button class="count-panel__minus ${productQuantity === 1 ? 'count-panel__minus_one' : ''} count-panel__button" aria-label="Зменшити кількість" data-tooltip="Зменшити кількість"><i class="fa fa-minus" aria-hidden="true"></i></button>
+          <span class="count-panel__count">${productQuantity}</span>
+          <button class="count-panel__plus count-panel__button" aria-label="Збільшити кількість" data-tooltip="Збільшити кількість"><i class="fa fa-plus" aria-hidden="true"></i></button>
+        </div>
+        <div class="button_panel">
+          <button class="button_panel__bought_button"  data-tooltip="Купити товар">Куплено</button>
+          <button class="button_panel__canceled_button" aria-label="Видалити товар" data-tooltip="Видалити товар"><i class="fa fa-times" aria-hidden="true"></i></button>
+        </div>
+      </li>`;
+
+    lastProductInList.insertAdjacentHTML('afterend', selectedProductListHTML);
+    const createdProduct = productList.querySelector('li:last-child');
+        
+    let productSummaryItem = document.createElement('li');
+    productSummaryItem.classList.add('products-summary__product');
+    productSummaryItem.innerHTML = `
+        <span class="products-summary__product-name ">${enteredProductName}</span>
+        <span class="products-summary__product-quantity ">${productQuantity}</span>
+       `;
+
+    if(isBought) {
+        const boughtButton = createdProduct.querySelector('.button_panel__bought_button');
+        addUnboughtStyles(createdProduct, boughtButton, productSummaryItem);
+
+    } else {
+        const unboughtProductSummaryList = purchaseInfo.querySelector('.products-summary__name_top + .products-summary__list');
+        unboughtProductSummaryList.append(productSummaryItem);
+    }
+
+    addEventListersToButtonsForCreatedProduct(createdProduct);
+}
+
+function addEventListersToButtonsForCreatedProduct(createdProduct) {
+    createdProduct.querySelector('.count-panel__minus').addEventListener('click', decreaseQuantityOfCreatedProduct);
+    createdProduct.querySelector('.count-panel__plus').addEventListener('click', increaseQuantityOfCreatedProduct);
+    createdProduct.querySelector('.button_panel__canceled_button').addEventListener('click', removeProductFromList);
+    createdProduct.querySelector('.button_panel__bought_button').addEventListener('click', toggleProductBought);
+    createdProduct.querySelector('.selected-product__name').addEventListener('dblclick', handleProductNameEdtion);
+}
+
+function handleProductNameEdtion() {
+    const selectedProduct = this.closest('.selected-product'); 
+    const productNameContainer = selectedProduct.querySelector('.selected-product__name');
+    const productName = productNameContainer.textContent;
+    const productSummaryItem = getProductSummaryItemByName(productName);
+    
+    let products = getProductsFromLocalStorage();
+    let productFromLocalStorage = products.find(
+        product => product.name.toLocaleLowerCase() === productName.toLocaleLowerCase()
+    );
+
+    if(productFromLocalStorage.isBought)
+        return;
+
+    let editProductNameInput = document.createElement('input');
+    editProductNameInput.classList.add('input_product');
+    editProductNameInput.type = 'text';
+    editProductNameInput.value = productName;
+
+    productNameContainer.innerHTML = ''; 
+    productNameContainer.appendChild(editProductNameInput);
+    editProductNameInput.select();
+
+    let isHandlingChange = false; 
+
+    const handleNameChange = () => {
+        if(isHandlingChange)
+            return;
+        isHandlingChange = true; 
+
+        const editedProductName = editProductNameInput.value.trim();
+        if(!editedProductName){
+            productNameContainer.textContent = productFromLocalStorage.name;
+            alert("Ім'я товару при зміні не може бути порожнім!");
+            isHandlingChange = false; 
+            return;
+        }
+         if(products.find(product => 
+           product.name.toLocaleLowerCase() === editedProductName.toLocaleLowerCase() &&
+           product.name.toLocaleLowerCase() !== productFromLocalStorage.name.toLocaleLowerCase()
+        ))  {
+            productNameContainer.textContent = productFromLocalStorage.name;
+            alert("Ім'я товару при зміні має бути унікальним!");
+            isHandlingChange = false;
+            return;
+        }
+
+        productFromLocalStorage.name = editedProductName;
+        productSummaryItem.querySelector('.products-summary__product-name').textContent = editedProductName;
+        productNameContainer.textContent = editedProductName
+        setProductsToLocalStorage(products);   
+
+        isHandlingChange = false;
+    };
+    
+    editProductNameInput.addEventListener('blur', handleNameChange);
+    
+    editProductNameInput.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') {
+            handleNameChange();
+        }
+    });
+}
+
+
+function removeProductFromList() {
+    const removedProduct = this.closest('.selected-product');
+    const productName = removedProduct.querySelector('.selected-product__name').textContent;
+    removedProduct.remove();
+
+    const productSummary = getProductSummaryItemByName(productName);
+    productSummary.remove();
+
+    let products = getProductsFromLocalStorage();
+    products = products.filter(product => product.name.toLocaleLowerCase() !== productName.toLocaleLowerCase());
+
+    setProductsToLocalStorage(products);
+}
+
+function toggleProductBought() {
+    const selectedProduct = this.closest('.selected-product');
+    const productName = selectedProduct.querySelector('.selected-product__name').textContent;
+    const boughtButton = selectedProduct.querySelector('.button_panel__bought_button');
+    const productSummaryItem = getProductSummaryItemByName(productName);
+
+
+    let products = getProductsFromLocalStorage();
+    let productFromLocalStorage = products.find(
+        product => product.name.toLocaleLowerCase() === productName.toLocaleLowerCase()
+    );
+
+    if(productFromLocalStorage.isBought){
+        productFromLocalStorage.isBought = false;
+
+        boughtButton.textContent = 'Куплено';
+        boughtButton.classList.remove('button_panel__bought_button_not');
+
+        selectedProduct.querySelector('.selected-product__name').classList.remove('selected-product__name_bought');
+        selectedProduct.querySelector('.count-panel__minus').classList.remove('count-panel__button_bought');
+        selectedProduct.querySelector('.count-panel__plus').classList.remove('count-panel__button_bought');
+        selectedProduct.querySelector('.button_panel__canceled_button').classList.remove('button_panel__canceled_button_bought');
+
+        productSummaryItem.querySelector('.products-summary__product-name').classList.remove('products-summary__product-name_bought');
+        productSummaryItem.querySelector('.products-summary__product-quantity').classList.remove('products-summary__product-quantity_bought');
+
+        const boughtProductSummaryList = purchaseInfo.querySelector('.products-summary__name_top + .products-summary__list');
+        boughtProductSummaryList.appendChild(productSummaryItem); 
+
+    } else {
+        productFromLocalStorage.isBought = true;
+        addUnboughtStyles(selectedProduct,boughtButton, productSummaryItem );
+    }
+
+    setProductsToLocalStorage(products);
+
+}
+
+function addUnboughtStyles(selectedProduct,boughtButton, productSummaryItem ) {
+    boughtButton.textContent = 'Не куплено';
+    boughtButton.classList.add('button_panel__bought_button_not');
+
+    selectedProduct.querySelector('.selected-product__name').classList.add('selected-product__name_bought');
+    selectedProduct.querySelector('.count-panel__minus').classList.add('count-panel__button_bought');
+    selectedProduct.querySelector('.count-panel__plus').classList.add('count-panel__button_bought');
+    selectedProduct.querySelector('.button_panel__canceled_button').classList.add('button_panel__canceled_button_bought');
+
+    productSummaryItem.querySelector('.products-summary__product-name').classList.add('products-summary__product-name_bought');
+    productSummaryItem.querySelector('.products-summary__product-quantity').classList.add('products-summary__product-quantity_bought');
+
+    const boughtProductSummaryList = purchaseInfo.querySelector('.products-summary__list_bottom');
+    boughtProductSummaryList.appendChild(productSummaryItem); 
+}
+
+
+function increaseQuantityOfCreatedProduct() {
+    const createdProduct = this.closest('.selected-product'); 
+    const productName = createdProduct.querySelector('.selected-product__name').textContent;
+
+    let products = getProductsFromLocalStorage();
+    let productFromLocalStorage = products.find(
+        product => product.name.toLocaleLowerCase() === productName.toLocaleLowerCase()
+    );
+
+    productFromLocalStorage.quantity++;
+    if(productFromLocalStorage.quantity === 2)
+        createdProduct.querySelector('.count-panel__minus').classList.remove('count-panel__minus_one');
+    setProductsToLocalStorage(products);
+
+    const quantityPanel = createdProduct.querySelector(".count-panel__count");
+    quantityPanel.textContent = productFromLocalStorage.quantity;
+
+    const productSummary = getProductSummaryItemByName(productName);
+    productSummary.querySelector('.products-summary__product-quantity').textContent = productFromLocalStorage.quantity;
+}
+
+function decreaseQuantityOfCreatedProduct() {
+    const createdProduct = this.closest('.selected-product'); 
+    const productName = createdProduct.querySelector('.selected-product__name').textContent;
+
+    let products = getProductsFromLocalStorage();
+    let productFromLocalStorage = products.find(
+        product => product.name.toLocaleLowerCase() === productName.toLocaleLowerCase()
+    );
+
+    if(productFromLocalStorage.quantity > 1)
+        productFromLocalStorage.quantity--;
+    if(productFromLocalStorage.quantity === 1)
+        createdProduct.querySelector('.count-panel__minus').classList.add('count-panel__minus_one');
+
+    setProductsToLocalStorage(products);
+
+    const quantityPanel = createdProduct.querySelector(".count-panel__count");
+    quantityPanel.textContent = productFromLocalStorage.quantity;
+
+    const productSummary = getProductSummaryItemByName(productName);
+    productSummary.querySelector('.products-summary__product-quantity').textContent = productFromLocalStorage.quantity;
+}
+
+
+function existNameInProductList(enteredProductName){
+    return getProductsFromLocalStorage().some(
+        item => item.name.toLocaleLowerCase() === enteredProductName.toLocaleLowerCase()
     );
 }
 
-function increaseQuantity(id) {
-    const product = products.find(p => p.id === id);
-    if (product && !product.bought) {
-        product.quantity++;
-        updateProductList();
-        updateStatistics();
+
+addProductButton.addEventListener('click', addProduct);
+input.addEventListener('keydown', function(e) {
+    if(e.key === 'Enter') {
+        addProduct();
     }
-}
+}  );
 
-function decreaseQuantity(id) {
-    const product = products.find(p => p.id === id);
-    if (product && !product.bought && product.quantity > 1) {
-        product.quantity--;
-        updateProductList();
-        updateStatistics();
-    }
-}
-
-function toggleBoughtStatus(id) {
-    const product = products.find(p => p.id === id);
-    if (product) {
-        product.bought = !product.bought;
-        updateProductList();
-        updateStatistics();
-    }
-}
-
-function deleteProduct(id) {
-    products = products.filter(p => p.id !== id);
-    updateProductList();
-    updateStatistics();
-}
-
-function editProductName(id, nameElement) {
-    const product = products.find(p => p.id === id);
-    if (!product || product.bought) return;
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'input_product';
-    input.value = product.name;
-
-    nameElement.textContent = '';
-    nameElement.appendChild(input);
-    input.focus();
-
-    let isSaving = false; 
-
-    const saveName = () => {
-        if (isSaving) return; 
-        isSaving = true;
-        
-        const newName = input.value.trim();
-        
-        if (!newName) {
-            nameElement.textContent = product.name;
-            return;
-        }
-        
-        if (isProductNameExists(newName) && newName.toLowerCase() !== product.name.toLowerCase()) {
-            alert('Товар з такою назвою вже є у списку');
-            nameElement.textContent = product.name;
-            return;
-        }
-        
-        if (newName !== product.name) {
-            product.name = newName;
-            updateProductList();
-            updateStatistics();
-        } else {
-            nameElement.textContent = product.name;
-        }
-    };
-
-    input.addEventListener('blur', saveName);
-    input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            saveName();
-            input.blur(); 
-        }
-    });
-}
-
-function updateStatistics() {
-    const notBoughtProducts = products.filter(p => !p.bought);
-    const boughtProducts = products.filter(p => p.bought);
-
-    while (purchaseInfo.firstChild) {
-        purchaseInfo.removeChild(purchaseInfo.firstChild);
-    }
-
-    const leftSection = document.createElement('section');
-    leftSection.className = 'products-summary';
-
-    const leftHeader = document.createElement('h2');
-    leftHeader.className = 'products-summary__name products-summary__name_top';
-    leftHeader.textContent = 'Залишилося';
-
-    const leftList = document.createElement('ul');
-    leftList.className = 'products-summary__list';
-
-    notBoughtProducts.forEach(product => {
-        const item = document.createElement('li');
-        item.className = 'products-summary__product';
-
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'products-summary__product-name';
-        nameSpan.textContent = product.name;
-        nameSpan.style.marginRight = '10px'; 
-
-        const quantitySpan = document.createElement('span');
-        quantitySpan.className = 'products-summary__product-quantity';
-        quantitySpan.textContent = product.quantity;
-
-        item.appendChild(nameSpan);
-        item.appendChild(quantitySpan);
-        leftList.appendChild(item);
-    });
-
-    leftSection.appendChild(leftHeader);
-    leftSection.appendChild(leftList);
-
-    const boughtSection = document.createElement('section');
-    boughtSection.className = 'products-summary';
-
-    const boughtHeader = document.createElement('h2');
-    boughtHeader.className = 'products-summary__name';
-    boughtHeader.textContent = 'Куплено';
-
-    const boughtList = document.createElement('ul');
-    boughtList.className = 'products-summary__list products-summary__list_bottom';
-
-    boughtProducts.forEach(product => {
-        const item = document.createElement('li');
-        item.className = 'products-summary__product';
-
-        const nameSpan = document.createElement('span');
-        nameSpan.className = 'products-summary__product-name products-summary__product-name_bought';
-        nameSpan.textContent = product.name;
-        nameSpan.style.marginRight = '10px'; 
-
-        const quantitySpan = document.createElement('span');
-        quantitySpan.className = 'products-summary__product-quantity products-summary__product-quantity_bought';
-        quantitySpan.textContent = product.quantity;
-
-        item.appendChild(nameSpan);
-        item.appendChild(quantitySpan);
-        boughtList.appendChild(item);
-    });
-
-    boughtSection.appendChild(boughtHeader);
-    boughtSection.appendChild(boughtList);
-
-    purchaseInfo.appendChild(leftSection);
-    purchaseInfo.appendChild(boughtSection);
-}
 
 init();
